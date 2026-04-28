@@ -8,6 +8,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "node16",
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
     "outDir": "dist"
   }
 }

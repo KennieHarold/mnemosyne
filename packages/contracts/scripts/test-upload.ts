@@ -43,13 +43,7 @@ const file = await ZgFile.fromFilePath(tmpPath);
 const [tree, treeErr] = await file.merkleTree();
 if (treeErr) throw new Error(`Merkle tree failed: ${treeErr}`);
 
-const [, err] = await indexer.upload(
-  file,
-  rpcUrl,
-  // Dual-package hazard: SDK types resolve ethers under CJS, our import resolves
-  // under ESM. Same version at runtime, but TS treats the Signer types as distinct.
-  signer as unknown as Parameters<typeof indexer.upload>[2],
-);
+const [, err] = await indexer.upload(file, rpcUrl, signer as any);
 if (err) {
   throw new Error(`Upload failed: ${err}`);
 }
