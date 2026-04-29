@@ -2,13 +2,14 @@
   "cSpell.words": [
     "0gfoundation",
     "0glabs",
+    "CCIP",
+    "ENSIP",
     "merkle",
     "MNEMO",
+    "Offchain",
     "Oupt",
     "Preimage",
     "Qwen"
   ],
-  "cSpell.ignorePaths": [
-    "packages/contracts/agents.json"
-  ]
+  "cSpell.ignorePaths": ["packages/contracts/agents.json"]
 }
