@@ -1,5 +1,8 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { Address } from "viem";
+import { config } from "dotenv";
+
+config();
 
 const gatewaySigner = process.env.GATEWAY_SIGNER_ADDRESS as Address | undefined;
 if (!gatewaySigner) {
@@ -9,7 +12,7 @@ if (!gatewaySigner) {
 export default buildModule("OffchainResolverModule", (m) => {
   const url = m.getParameter<string>(
     "url",
-    "https://example.com/lookup/{sender}/{data}.json",
+    "https://ens-0g-gateway.kennie-harold.workers.dev/{sender}/{data}.json",
   );
   const signers = m.getParameter<Address[]>("signers", [gatewaySigner]);
 

@@ -1,0 +1,8 @@
+name = "ens-0g-gateway"
+main = "src/index.ts"
+compatibility_date = "2024-09-01"
+
+[vars]
+ZERO_G_RPC = "https://evmrpc-testnet.0g.ai"
+INFT_CONTRACT = "0x9C45969430525D910FBa295b2fD9C500D66A835C"
+RESOLVER_ADDRESS = "0xB0d33Aa069dD4F55765BFF8be757848622c6e85C"
