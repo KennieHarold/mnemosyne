@@ -11,7 +11,8 @@
     "Offchain",
     "Oupt",
     "Preimage",
-    "Qwen"
+    "Qwen",
+    "Subnames"
   ],
   "cSpell.ignorePaths": ["packages/contracts/agents.json"]
 }

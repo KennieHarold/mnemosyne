@@ -19,7 +19,9 @@ const INDEXER_URL = "https://indexer.example";
 const proof = (seed: string) => keccak256(toBytes(seed));
 
 describe("AgentNFT", async function () {
-  const { viem } = await network.create();
+  const { viem } = await network.create({
+    override: { allowUnlimitedContractSize: true },
+  });
   const [deployer, alice, bob] = await viem.getWalletClients();
 
   let impl: Awaited<ReturnType<typeof viem.deployContract<"AgentNFT">>>;
