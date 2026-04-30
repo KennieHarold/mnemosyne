@@ -108,6 +108,10 @@ contract AgentNFT is
         return _getAgentStorage().verifier;
     }
 
+    function nextTokenId() public view virtual returns (uint256) {
+        return _getAgentStorage().nextTokenId;
+    }
+
     // Admin functions
     function updateVerifier(
         address newVerifier
