@@ -19,11 +19,18 @@ const Bar = styled.header`
   z-index: 2;
 `;
 
-const Brand = styled.div`
+const Brand = styled(Link)`
   display: flex;
   align-items: center;
   gap: 10px;
   color: ${({ theme }) => theme.ink[1]};
+  width: fit-content;
+
+  &:focus-visible {
+    outline: 1.5px solid ${({ theme }) => theme.ink[1]};
+    outline-offset: 2px;
+    border-radius: ${({ theme }) => theme.radius.default};
+  }
 `;
 
 const Wordmark = styled.span`
@@ -166,7 +173,7 @@ export default function Header() {
 
   return (
     <Bar>
-      <Brand>
+      <Brand href="/" aria-label="Go to landing page">
         <Logo size={22} alt="Mnemo" />
         <Wordmark>MNEMO</Wordmark>
         <VersionChip>v1.0.0</VersionChip>

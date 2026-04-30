@@ -17,7 +17,8 @@
     "Preimage",
     "Qwen",
     "Subnames",
-    "Wordmark"
+    "Wordmark",
+    "xyflow"
   ],
   "cSpell.ignorePaths": [
     "packages/contracts/scripts/agents.json",
