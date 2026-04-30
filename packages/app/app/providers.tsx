@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { ThemeProvider, createGlobalStyle } from "styled-components";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { WagmiProvider } from "wagmi";
 import { theme } from "@/lib/theme";
+import { config as wagmiConfig } from "@/lib/wagmi";
 import StyledComponentsRegistry from "@/lib/registry";
 
 const GlobalStyle = createGlobalStyle`
@@ -46,11 +50,17 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 export default function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
+
   return (
     <StyledComponentsRegistry>
       <ThemeProvider theme={theme}>
         <GlobalStyle />
-        {children}
+        <WagmiProvider config={wagmiConfig}>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        </WagmiProvider>
       </ThemeProvider>
     </StyledComponentsRegistry>
   );
