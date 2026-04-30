@@ -84,6 +84,10 @@ for (const agent of agents) {
 
   const receipt = await publicClient.waitForTransactionReceipt({
     hash: txHash,
+    checkReplacement: false,
+    pollingInterval: 2_000,
+    retryCount: 20,
+    timeout: 300_000,
   });
   if (receipt.status !== "success") {
     throw new Error(`Mint reverted for ${agent.label} (tx ${txHash})`);
