@@ -3,6 +3,7 @@
     "0gfoundation",
     "0glabs",
     "CCIP",
+    "durin",
     "ensdomains",
     "ENSIP",
     "INFT",
@@ -12,7 +13,8 @@
     "Oupt",
     "Preimage",
     "Qwen",
-    "Subnames"
+    "Subnames",
+    "Wordmark"
   ],
   "cSpell.ignorePaths": [
     "packages/contracts/scripts/agents.json",
