@@ -14,5 +14,8 @@
     "Qwen",
     "Subnames"
   ],
-  "cSpell.ignorePaths": ["packages/contracts/agents.json"]
+  "cSpell.ignorePaths": [
+    "packages/contracts/scripts/agents.json",
+    "packages/contracts/scripts/agents-deployed.json"
+  ]
 }

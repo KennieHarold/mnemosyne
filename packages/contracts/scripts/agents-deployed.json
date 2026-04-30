@@ -1,0 +1,52 @@
+[
+  {
+    "label": "socrates",
+    "encryptedURI": "0x17524f81dc70992635727d946ea7ffe03f9f20f04daf5bd081d0e97b284ab7bf",
+    "metadataHash": "0xc84a3d9574a15dfe043ed490376f58dc4d88190410ce12aba998978d26d93b9a"
+  },
+  {
+    "label": "hypatia",
+    "encryptedURI": "0xe995ec57ba12e0c6a86fc85f99b8d256104854fc8de9d8730ebb2161edc4210c",
+    "metadataHash": "0xbcbd137fb3633991e22ee96aa68b1d31575059e8f0a15bd4087b6cd60f1c6b84"
+  },
+  {
+    "label": "sappho",
+    "encryptedURI": "0xd6486ab452ab422a77ba1af5ac25fd633d537e7bcc061221fecc0bfcad317093",
+    "metadataHash": "0x0d5ac4f5d92e1027eb82467b3298c6c8e738e08aaae0da660681cbc785dc0af1"
+  },
+  {
+    "label": "diogenes",
+    "encryptedURI": "0xc7944e2299da147b12bb6f93cf317579463f50a29ece83e3fc0b5cc07ecb03f9",
+    "metadataHash": "0xe1c84903a752de8cacb64670a20c8ef43c8b839f5e7b90b2d85ca7be9041167f"
+  },
+  {
+    "label": "laotzu",
+    "encryptedURI": "0x7fa0b104b6f1b75b769b3a81efa211f4cc99fa14b256b94b05f46b569de0e1a9",
+    "metadataHash": "0xb40539aeac34ae291646af2db15305a0dba04fe68c2723274594c812f4aee9e9"
+  },
+  {
+    "label": "sherlock",
+    "encryptedURI": "0x95115d59901d8ebe08d4d7143f8ff152c9cc43153796c7e4d120c5cc4fc28fde",
+    "metadataHash": "0xeb228fd7faba8e275a76ccb308fbb31ae47a351c2d5cce90ec07052098f1b8e4"
+  },
+  {
+    "label": "quixote",
+    "encryptedURI": "0xb2771dd1e50273da12eb28b6a62b84e86324c629a56d76715ad7c804dede8256",
+    "metadataHash": "0xdfa7342caeed683706500afa32ba7366c29ad4dad312b553d0e7d266cff69622"
+  },
+  {
+    "label": "creature",
+    "encryptedURI": "0x69c96c2af5da3e178bd8ce147c46261c1bacabaf56a9c425deac9a8aca6d9c6f",
+    "metadataHash": "0x40f3dac58dfd4e1a34721983ffadda3799c676a1afd8e16b093866169088283a"
+  },
+  {
+    "label": "ahab",
+    "encryptedURI": "0x7afcb2fe617ce23cd59dcd96133d62a9e4c2e4634ad2925c47493788eb841727",
+    "metadataHash": "0x63cc0cd6aa43f3813400aca0bd8a1ab48cc7046de3e2a285e901bef92ad90f9e"
+  },
+  {
+    "label": "cheshire",
+    "encryptedURI": "0x1b57df11982bf4448f4b1012ad48b28b8471bcd47b88706268ae4c017618fa9f",
+    "metadataHash": "0xa7888ae1f99152daee32e8bea44557b4923c2e2653b1d3ebe33acb6f2faed210"
+  }
+]
