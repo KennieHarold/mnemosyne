@@ -1,5 +1,5 @@
 import { defineChain } from "viem";
-import { createConfig, http } from "wagmi";
+import { cookieStorage, createConfig, createStorage, http } from "wagmi";
 import { injected } from "wagmi/connectors";
 
 export const zeroGGalileoTestnet = defineChain({
@@ -18,6 +18,7 @@ export const zeroGGalileoTestnet = defineChain({
 export const config = createConfig({
   chains: [zeroGGalileoTestnet],
   connectors: [injected()],
+  storage: createStorage({ storage: cookieStorage }),
   transports: {
     [zeroGGalileoTestnet.id]: http(),
   },

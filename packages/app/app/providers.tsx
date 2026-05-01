@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ThemeProvider, createGlobalStyle } from "styled-components";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from "wagmi";
+import { type State, WagmiProvider } from "wagmi";
 import { theme } from "@/lib/theme";
 import { config as wagmiConfig } from "@/lib/wagmi";
 import StyledComponentsRegistry from "@/lib/registry";
@@ -49,14 +49,20 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+  initialState,
+}: {
+  children: React.ReactNode;
+  initialState?: State;
+}) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
     <StyledComponentsRegistry>
       <ThemeProvider theme={theme}>
         <GlobalStyle />
-        <WagmiProvider config={wagmiConfig}>
+        <WagmiProvider config={wagmiConfig} initialState={initialState}>
           <QueryClientProvider client={queryClient}>
             {children}
           </QueryClientProvider>

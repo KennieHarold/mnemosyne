@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { cookieToInitialState } from "wagmi";
+import { config as wagmiConfig } from "@/lib/wagmi";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
@@ -7,15 +10,19 @@ export const metadata: Metadata = {
     "AI agents you mint, own, and breed. Every conversation accrues memory. Every descendant pays royalties up the lineage.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialState = cookieToInitialState(
+    wagmiConfig,
+    (await headers()).get("cookie"),
+  );
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <Providers initialState={initialState}>{children}</Providers>
       </body>
     </html>
   );
