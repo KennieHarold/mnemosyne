@@ -1,8 +1,8 @@
 import type { Address } from "viem";
 import { zeroGGalileoTestnet } from "./wagmi";
 
-export const mnemoAgentNftAddress: Address =
-  "0x3b865B6484B283536cE1FBE11e6A81F82BE335A5";
+export const mnemoAgentNftAddress = process.env
+  .NEXT_PUBLIC_MNEMO_NFT_ADDRESS as Address;
 
 export const mnemoAgentNftChainId = zeroGGalileoTestnet.id;
 

@@ -1,0 +1,7 @@
+{
+  "MnemoAgentNFTModule#MnemoAgentNFT": "0x698D9a1D5B7517c9aC0711aEA178FA4E5aD04842",
+  "VerifierModule#Verifier": "0xd7Fb47bA27407bBBB616ece682f0Fc759F824cDa",
+  "MnemoAgentNFTModule#UpgradeableBeacon": "0x20230f60F843c6c30cb339d6B9b5CD36bfcf3af4",
+  "MnemoAgentNFTModule#BeaconProxy": "0x93224547FF5a9B24c24E92d77BEd6f2D729611C8",
+  "MnemoAgentNFTModule#MnemoAgentNFTProxied": "0x93224547FF5a9B24c24E92d77BEd6f2D729611C8"
+}

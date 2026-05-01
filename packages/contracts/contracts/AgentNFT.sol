@@ -4,7 +4,6 @@ pragma solidity ^0.8.28;
 import {
     AccessControlEnumerableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7857} from "./interfaces/IERC7857.sol";
 import {IERC7857Metadata} from "./interfaces/IERC7857Metadata.sol";
 import {
@@ -134,30 +133,52 @@ contract AgentNFT is
         TokenData storage token = $.tokens[tokenId];
         require(token.owner == msg.sender, "Not owner");
 
-        PreimageProofOutput[] memory proofOupt = $.verifier.verifyPreimage(
-            proofs
-        );
-        bytes32[] memory newDataHashes = new bytes32[](proofOupt.length);
-
-        for (uint i = 0; i < proofOupt.length; i++) {
-            require(
-                proofOupt[i].isValid,
-                string(
-                    abi.encodePacked(
-                        "Invalid preimage proof at index ",
-                        i,
-                        " with data hash ",
-                        proofOupt[i].dataHash
-                    )
-                )
-            );
-            newDataHashes[i] = proofOupt[i].dataHash;
-        }
-
+        bytes32[] memory newDataHashes = _verifyPreimage($, proofs);
         bytes32[] memory oldDataHashes = token.dataHashes;
         token.dataHashes = newDataHashes;
 
         emit Updated(tokenId, oldDataHashes, newDataHashes);
+    }
+
+    function _verifyPreimage(
+        AgentNFTStorage storage $,
+        bytes[] calldata proofs
+    ) private returns (bytes32[] memory dataHashes) {
+        PreimageProofOutput[] memory proofOupt = $.verifier.verifyPreimage(
+            proofs
+        );
+        dataHashes = new bytes32[](proofOupt.length);
+        for (uint i = 0; i < proofOupt.length; i++) {
+            require(proofOupt[i].isValid, "Invalid preimage proof");
+            dataHashes[i] = proofOupt[i].dataHash;
+        }
+    }
+
+    function _verifyTransferValidity(
+        AgentNFTStorage storage $,
+        uint256 tokenId,
+        address to,
+        bytes[] calldata proofs
+    )
+        private
+        returns (bytes32[] memory newDataHashes, bytes16[] memory sealedKeys)
+    {
+        TransferValidityProofOutput[] memory proofOupt = $
+            .verifier
+            .verifyTransferValidity(proofs);
+        newDataHashes = new bytes32[](proofOupt.length);
+        sealedKeys = new bytes16[](proofOupt.length);
+        bytes32[] storage oldHashes = $.tokens[tokenId].dataHashes;
+        for (uint i = 0; i < proofOupt.length; i++) {
+            require(
+                proofOupt[i].isValid &&
+                    proofOupt[i].oldDataHash == oldHashes[i] &&
+                    proofOupt[i].receiver == to,
+                "Invalid transfer proof"
+            );
+            sealedKeys[i] = proofOupt[i].sealedKey;
+            newDataHashes[i] = proofOupt[i].newDataHash;
+        }
     }
 
     function mint(
@@ -176,25 +197,7 @@ contract AgentNFT is
             to = msg.sender;
         }
 
-        PreimageProofOutput[] memory proofOupt = $.verifier.verifyPreimage(
-            proofs
-        );
-        bytes32[] memory dataHashes = new bytes32[](proofOupt.length);
-
-        for (uint i = 0; i < proofOupt.length; i++) {
-            require(
-                proofOupt[i].isValid,
-                string(
-                    abi.encodePacked(
-                        "Invalid preimage proof at index ",
-                        i,
-                        " with data hash ",
-                        proofOupt[i].dataHash
-                    )
-                )
-            );
-            dataHashes[i] = proofOupt[i].dataHash;
-        }
+        bytes32[] memory dataHashes = _verifyPreimage($, proofs);
 
         tokenId = $.nextTokenId++;
         $.tokens[tokenId] = TokenData({
@@ -217,28 +220,10 @@ contract AgentNFT is
         require(to != address(0), "Zero address");
         require($.tokens[tokenId].owner == msg.sender, "Not owner");
 
-        TransferValidityProofOutput[] memory proofOupt = $
-            .verifier
-            .verifyTransferValidity(proofs);
-        bytes16[] memory sealedKeys = new bytes16[](proofOupt.length);
-        bytes32[] memory newDataHashes = new bytes32[](proofOupt.length);
-
-        for (uint i = 0; i < proofOupt.length; i++) {
-            require(
-                proofOupt[i].isValid &&
-                    proofOupt[i].oldDataHash ==
-                    $.tokens[tokenId].dataHashes[i] &&
-                    proofOupt[i].receiver == to,
-                string(
-                    abi.encodePacked(
-                        "Invalid transfer validity proof at index ",
-                        i
-                    )
-                )
-            );
-            sealedKeys[i] = proofOupt[i].sealedKey;
-            newDataHashes[i] = proofOupt[i].newDataHash;
-        }
+        (
+            bytes32[] memory newDataHashes,
+            bytes16[] memory sealedKeys
+        ) = _verifyTransferValidity($, tokenId, to, proofs);
 
         $.tokens[tokenId].owner = to;
         $.tokens[tokenId].dataHashes = newDataHashes;
@@ -263,48 +248,10 @@ contract AgentNFT is
             "Not approved"
         );
 
-        TransferValidityProofOutput[] memory proofOupt = $
-            .verifier
-            .verifyTransferValidity(proofs);
-        bytes16[] memory sealedKeys = new bytes16[](proofOupt.length);
-        bytes32[] memory newDataHashes = new bytes32[](proofOupt.length);
-
-        for (uint i = 0; i < proofOupt.length; i++) {
-            require(proofOupt[i].isValid, "Invalid transfer validity proof");
-            require(
-                proofOupt[i].newDataHash == $.tokens[tokenId].dataHashes[i],
-                string(
-                    abi.encodePacked(
-                        "New data hash mismatch, hash in proof: ",
-                        Strings.toHexString(
-                            uint256(proofOupt[i].newDataHash),
-                            32
-                        ),
-                        ", but hash in token: ",
-                        Strings.toHexString(
-                            uint256($.tokens[tokenId].dataHashes[i]),
-                            32
-                        )
-                    )
-                )
-            );
-            require(
-                proofOupt[i].receiver == to,
-                string(
-                    abi.encodePacked(
-                        "Receiver mismatch, receiver in proof: ",
-                        Strings.toHexString(
-                            uint256(uint160(proofOupt[i].receiver)),
-                            20
-                        ),
-                        ", but transfer to: ",
-                        Strings.toHexString(uint256(uint160(to)), 20)
-                    )
-                )
-            );
-            sealedKeys[i] = proofOupt[i].sealedKey;
-            newDataHashes[i] = proofOupt[i].newDataHash;
-        }
+        (
+            bytes32[] memory newDataHashes,
+            bytes16[] memory sealedKeys
+        ) = _verifyTransferValidity($, tokenId, to, proofs);
 
         $.tokens[tokenId].owner = to;
         $.tokens[tokenId].dataHashes = newDataHashes;
@@ -322,41 +269,7 @@ contract AgentNFT is
         require(to != address(0), "Zero address");
         require($.tokens[tokenId].owner == msg.sender, "Not owner");
 
-        TransferValidityProofOutput[] memory proofOupt = $
-            .verifier
-            .verifyTransferValidity(proofs);
-        bytes32[] memory newDataHashes = new bytes32[](proofOupt.length);
-        bytes16[] memory sealedKeys = new bytes16[](proofOupt.length);
-
-        for (uint i = 0; i < proofOupt.length; i++) {
-            require(
-                proofOupt[i].isValid &&
-                    proofOupt[i].oldDataHash ==
-                    $.tokens[tokenId].dataHashes[i] &&
-                    proofOupt[i].receiver == to,
-                string(
-                    abi.encodePacked(
-                        "Invalid transfer validity proof at index ",
-                        i
-                    )
-                )
-            );
-            sealedKeys[i] = proofOupt[i].sealedKey;
-            newDataHashes[i] = proofOupt[i].newDataHash;
-        }
-
-        uint256 newTokenId = $.nextTokenId++;
-        $.tokens[newTokenId] = TokenData({
-            owner: to,
-            dataHashes: newDataHashes,
-            dataDescriptions: $.tokens[tokenId].dataDescriptions,
-            authorizedUsers: new address[](0),
-            approvedUser: address(0)
-        });
-
-        emit Cloned(tokenId, newTokenId, msg.sender, to);
-        emit PublishedSealedKey(to, newTokenId, sealedKeys);
-        return newTokenId;
+        return _cloneInternal($, tokenId, to, proofs);
     }
 
     function cloneFrom(
@@ -375,30 +288,21 @@ contract AgentNFT is
             "Not approved"
         );
 
-        TransferValidityProofOutput[] memory proofOupt = $
-            .verifier
-            .verifyTransferValidity(proofs);
-        bytes32[] memory newDataHashes = new bytes32[](proofOupt.length);
-        bytes16[] memory sealedKeys = new bytes16[](proofOupt.length);
+        return _cloneInternal($, tokenId, to, proofs);
+    }
 
-        for (uint i = 0; i < proofOupt.length; i++) {
-            require(
-                proofOupt[i].isValid &&
-                    proofOupt[i].oldDataHash ==
-                    $.tokens[tokenId].dataHashes[i] &&
-                    proofOupt[i].receiver == to,
-                string(
-                    abi.encodePacked(
-                        "Invalid transfer validity proof at index ",
-                        i
-                    )
-                )
-            );
-            sealedKeys[i] = proofOupt[i].sealedKey;
-            newDataHashes[i] = proofOupt[i].newDataHash;
-        }
+    function _cloneInternal(
+        AgentNFTStorage storage $,
+        uint256 tokenId,
+        address to,
+        bytes[] calldata proofs
+    ) private returns (uint256 newTokenId) {
+        (
+            bytes32[] memory newDataHashes,
+            bytes16[] memory sealedKeys
+        ) = _verifyTransferValidity($, tokenId, to, proofs);
 
-        uint256 newTokenId = $.nextTokenId++;
+        newTokenId = $.nextTokenId++;
         $.tokens[newTokenId] = TokenData({
             owner: to,
             dataHashes: newDataHashes,
@@ -409,7 +313,6 @@ contract AgentNFT is
 
         emit Cloned(tokenId, newTokenId, msg.sender, to);
         emit PublishedSealedKey(to, newTokenId, sealedKeys);
-        return newTokenId;
     }
 
     function authorizeUsage(uint256 tokenId, address to) public virtual {
