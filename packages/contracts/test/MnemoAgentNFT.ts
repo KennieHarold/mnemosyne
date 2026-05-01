@@ -227,4 +227,187 @@ describe("MnemoAgentNFT", async function () {
       );
     });
   });
+
+  describe("breed", function () {
+    let parent1Id: bigint;
+    let parent2Id: bigint;
+    let childId: bigint;
+
+    before(async function () {
+      parent1Id = await nft.read.nextTokenId();
+      await nft.write.mintWithSubname([
+        [proof("breed-parent-1")],
+        ["weights"],
+        alice.account.address as Address,
+        "parent-one",
+      ]);
+      parent2Id = await nft.read.nextTokenId();
+      await nft.write.mintWithSubname([
+        [proof("breed-parent-2")],
+        ["weights"],
+        alice.account.address as Address,
+        "parent-two",
+      ]);
+    });
+
+    it("mints the child via mintWithSubname and emits Bred", async function () {
+      childId = await nft.read.nextTokenId();
+      const recipient = alice.account.address as Address;
+
+      await viem.assertions.emitWithArgs(
+        nft.write.breed([
+          parent1Id,
+          parent2Id,
+          recipient,
+          [proof("breed-child-1")],
+          ["weights"],
+          "child-one",
+        ]),
+        nft,
+        "Bred",
+        [
+          childId,
+          parent1Id,
+          parent2Id,
+          getAddress(deployer.account.address),
+          1n,
+        ],
+      );
+
+      assert.equal(
+        getAddress(await nft.read.ownerOf([childId])),
+        getAddress(recipient),
+      );
+      assert.equal(await nft.read.labelForTokenId([childId]), "child-one");
+      assert.equal(await nft.read.tokenIdForLabel(["child-one"]), childId);
+    });
+
+    it("records lineage with generation = max(p1, p2) + 1", async function () {
+      const lineage = await nft.read.lineageOf([childId]);
+      assert.equal(lineage.parent1, parent1Id);
+      assert.equal(lineage.parent2, parent2Id);
+      assert.equal(lineage.generation, 1n);
+      assert.equal(
+        getAddress(lineage.breeder),
+        getAddress(deployer.account.address),
+      );
+    });
+
+    it("appends the child to childrenOf for both parents", async function () {
+      assert.deepEqual(
+        [...(await nft.read.childrenOf([parent1Id]))],
+        [childId],
+      );
+      assert.deepEqual(
+        [...(await nft.read.childrenOf([parent2Id]))],
+        [childId],
+      );
+    });
+
+    it("sets parents and generation text records on the child's label", async function () {
+      assert.equal(
+        await nft.read.textForLabel(["child-one", "parents"]),
+        `${parent1Id},${parent2Id}`,
+      );
+      assert.equal(
+        await nft.read.textForLabel(["child-one", "generation"]),
+        "1",
+      );
+    });
+
+    it("appends the child id to each parent's children text record", async function () {
+      assert.equal(
+        await nft.read.textForLabel(["parent-one", "children"]),
+        `${childId}`,
+      );
+      assert.equal(
+        await nft.read.textForLabel(["parent-two", "children"]),
+        `${childId}`,
+      );
+    });
+
+    it("appends to an existing children record rather than overwriting", async function () {
+      const parent3Id = await nft.read.nextTokenId();
+      await nft.write.mintWithSubname([
+        [proof("breed-parent-3")],
+        ["weights"],
+        alice.account.address as Address,
+        "parent-three",
+      ]);
+
+      const child2Id = await nft.read.nextTokenId();
+      await nft.write.breed([
+        parent1Id,
+        parent3Id,
+        alice.account.address as Address,
+        [proof("breed-child-2")],
+        ["weights"],
+        "child-two",
+      ]);
+
+      assert.equal(
+        await nft.read.textForLabel(["parent-one", "children"]),
+        `${childId},${child2Id}`,
+      );
+      assert.deepEqual(
+        [...(await nft.read.childrenOf([parent1Id]))],
+        [childId, child2Id],
+      );
+    });
+
+    it("computes generation across multiple levels of lineage", async function () {
+      const parent4Id = await nft.read.nextTokenId();
+      await nft.write.mintWithSubname([
+        [proof("breed-parent-4")],
+        ["weights"],
+        alice.account.address as Address,
+        "parent-four",
+      ]);
+
+      const grandchildId = await nft.read.nextTokenId();
+      await nft.write.breed([
+        childId,
+        parent4Id,
+        alice.account.address as Address,
+        [proof("breed-grand-1")],
+        ["weights"],
+        "grandchild-one",
+      ]);
+
+      const lineage = await nft.read.lineageOf([grandchildId]);
+      assert.equal(lineage.generation, 2n);
+      assert.equal(
+        await nft.read.textForLabel(["grandchild-one", "generation"]),
+        "2",
+      );
+    });
+
+    it("reverts when breeding a token with itself", async function () {
+      await viem.assertions.revertWith(
+        nft.write.breed([
+          parent1Id,
+          parent1Id,
+          zeroAddress,
+          [proof("self-breed")],
+          ["weights"],
+          "self-bred",
+        ]),
+        "Self-breeding not allowed",
+      );
+    });
+
+    it("reverts when a parent does not exist", async function () {
+      await viem.assertions.revertWith(
+        nft.write.breed([
+          parent1Id,
+          9999n,
+          zeroAddress,
+          [proof("missing-parent")],
+          ["weights"],
+          "missing-parent",
+        ]),
+        "Parent 2 missing",
+      );
+    });
+  });
 });

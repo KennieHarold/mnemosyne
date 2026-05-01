@@ -2,10 +2,19 @@
 pragma solidity ^0.8.28;
 
 import {AgentNFT} from "./AgentNFT.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract MnemoAgentNFT is AgentNFT {
     string private constant _NAME = "Mnemosyne Agents";
     string private constant _SYMBOL = "MNEMO";
+
+    struct Lineage {
+        uint256 parent1;
+        uint256 parent2;
+        uint256 generation;
+        address breeder;
+        uint256 birthBlock;
+    }
 
     struct MnemoAgentNFTStorage {
         mapping(string => address) labelToAddress;
@@ -14,6 +23,8 @@ contract MnemoAgentNFT is AgentNFT {
         mapping(string => bool) labelTaken;
         mapping(string => mapping(string => string)) labelText;
         mapping(string => bool) reservedLabels;
+        mapping(uint256 => Lineage) lineage;
+        mapping(uint256 => uint256[]) children;
     }
 
     // keccak256(abi.encode(uint(keccak256("agent.storage.MnemoAgentNFT")) - 1)) & ~bytes32(uint(0xff))
@@ -33,6 +44,13 @@ contract MnemoAgentNFT is AgentNFT {
     event TextRecordSet(string indexed label, string indexed key, string value);
     event TextRecordCleared(string indexed label, string indexed key);
     event LabelReservedSet(string indexed label, bool reserved);
+    event Bred(
+        uint256 indexed childTokenId,
+        uint256 indexed parent1,
+        uint256 indexed parent2,
+        address breeder,
+        uint256 generation
+    );
 
     function _getMnemoStorage()
         private
@@ -75,6 +93,98 @@ contract MnemoAgentNFT is AgentNFT {
         $$.tokenIdToLabel[tokenId] = label;
 
         emit SubnameIssued(tokenId, label, holder);
+    }
+
+    function breed(
+        uint256 parent1Id,
+        uint256 parent2Id,
+        address to,
+        bytes[] calldata proofs,
+        string[] calldata dataDescriptions,
+        string calldata label
+    ) external virtual returns (uint256 childTokenId) {
+        require(parent1Id != parent2Id, "Self-breeding not allowed");
+        require(_exists(parent1Id), "Parent 1 missing");
+        require(_exists(parent2Id), "Parent 2 missing");
+
+        if (to == address(0)) {
+            to = msg.sender;
+        }
+
+        childTokenId = mintWithSubname(proofs, dataDescriptions, to, label);
+
+        MnemoAgentNFTStorage storage $$ = _getMnemoStorage();
+        uint256 gen = _generationOf(parent1Id, parent2Id) + 1;
+        $$.lineage[childTokenId] = Lineage({
+            parent1: parent1Id,
+            parent2: parent2Id,
+            generation: gen,
+            breeder: msg.sender,
+            birthBlock: block.number
+        });
+        $$.children[parent1Id].push(childTokenId);
+        $$.children[parent2Id].push(childTokenId);
+
+        string memory parentsValue = string(
+            abi.encodePacked(
+                Strings.toString(parent1Id),
+                ",",
+                Strings.toString(parent2Id)
+            )
+        );
+        $$.labelText[label]["parents"] = parentsValue;
+        emit TextRecordSet(label, "parents", parentsValue);
+
+        string memory generationValue = Strings.toString(gen);
+        $$.labelText[label]["generation"] = generationValue;
+        emit TextRecordSet(label, "generation", generationValue);
+
+        string memory childIdStr = Strings.toString(childTokenId);
+        _appendChildren(parent1Id, childIdStr);
+        _appendChildren(parent2Id, childIdStr);
+
+        emit Bred(childTokenId, parent1Id, parent2Id, msg.sender, gen);
+    }
+
+    function _appendChildren(
+        uint256 parentId,
+        string memory childIdStr
+    ) private {
+        MnemoAgentNFTStorage storage $$ = _getMnemoStorage();
+        string memory parentLabel = $$.tokenIdToLabel[parentId];
+        if (bytes(parentLabel).length == 0) {
+            return;
+        }
+
+        string memory existing = $$.labelText[parentLabel]["children"];
+        string memory updated = bytes(existing).length == 0
+            ? childIdStr
+            : string(abi.encodePacked(existing, ",", childIdStr));
+
+        $$.labelText[parentLabel]["children"] = updated;
+        emit TextRecordSet(parentLabel, "children", updated);
+    }
+
+    function lineageOf(
+        uint256 tokenId
+    ) external view virtual returns (Lineage memory) {
+        return _getMnemoStorage().lineage[tokenId];
+    }
+
+    function childrenOf(
+        uint256 tokenId
+    ) external view virtual returns (uint256[] memory) {
+        return _getMnemoStorage().children[tokenId];
+    }
+
+    function _generationOf(
+        uint256 p1,
+        uint256 p2
+    ) private view returns (uint256) {
+        MnemoAgentNFTStorage storage $$ = _getMnemoStorage();
+        uint256 g1 = $$.lineage[p1].generation;
+        uint256 g2 = $$.lineage[p2].generation;
+        return g1 > g2 ? g1 : g2;
     }
 
     function setSubnameAddress(
