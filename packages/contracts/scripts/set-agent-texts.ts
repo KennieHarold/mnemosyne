@@ -39,7 +39,7 @@ console.log(`Updating text records for ${agents.length} agent(s)`);
 console.log(`  contract: ${contractAddress}`);
 console.log(`  signer:   ${walletClient.account.address}`);
 
-const keys = ["label", "generation", "tagline"] as const;
+const keys = ["generation", "tagline"] as const;
 
 for (const agent of agents) {
   console.log(`\n${agent.ensLabel}`);
@@ -51,7 +51,7 @@ for (const agent of agents) {
   }
 
   const tokenId = await nft.read.tokenIdForLabel([agent.ensLabel]);
-  const values = [agent.ensLabel, "0", agent.tagline];
+  const values = ["0", agent.tagline];
 
   const txHash = await nft.write.setTexts([tokenId, [...keys], values]);
   console.log(`  token #${tokenId} tx: ${txHash}`);
@@ -67,7 +67,7 @@ for (const agent of agents) {
     throw new Error(`setTexts reverted for ${agent.ensLabel} (tx ${txHash})`);
   }
 
-  console.log(`  updated label="${agent.ensLabel}" generation="0" tagline="${agent.tagline}"`);
+  console.log(`  updated generation="0" tagline="${agent.tagline}"`);
 }
 
 console.log("\nAll text records updated.");
