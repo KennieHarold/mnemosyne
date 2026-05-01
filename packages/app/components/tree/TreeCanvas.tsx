@@ -30,15 +30,9 @@ const Frame = styled.div`
   min-height: 0;
   width: 100%;
   background: ${({ theme }) => theme.bg.base};
-  background-image: linear-gradient(
-      rgba(120, 140, 180, 0.07) 0.5px,
-      transparent 0.5px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(120, 140, 180, 0.07) 0.5px,
-      transparent 0.5px
-    );
+  background-image:
+    linear-gradient(rgba(120, 140, 180, 0.07) 0.5px, transparent 0.5px),
+    linear-gradient(90deg, rgba(120, 140, 180, 0.07) 0.5px, transparent 0.5px);
   background-size: 24px 24px;
   border-top: 0.5px solid ${({ theme }) => theme.line.default};
   overflow: hidden;
@@ -137,7 +131,8 @@ function buildLayout(agents: Agent[]): {
   for (const [gen, list] of byGen.entries()) {
     list.sort((a, b) => Number(a.tokenId - b.tokenId));
     const count = list.length;
-    const spacing = count > 1 ? Math.min(120, (RULER_WIDTH - 120) / (count - 1)) : 0;
+    const spacing =
+      count > 1 ? Math.min(120, (RULER_WIDTH - 120) / (count - 1)) : 0;
     const totalSpan = spacing * (count - 1);
     const startX = 80 + (RULER_WIDTH - 160 - totalSpan) / 2;
     const baseY = generationY(gen);
@@ -191,10 +186,32 @@ type Props = {
 
 function TreeCanvasInner({ agents, isLoading, onAgentClick }: Props) {
   const frameRef = useRef<HTMLDivElement>(null);
+  const hideTimerRef = useRef<number | null>(null);
+  const nodeHoverRef = useRef(false);
+  const cardHoverRef = useRef(false);
   const [hover, setHover] = useState<HoverState>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const reactFlow = useReactFlow();
   const nodesInitialized = useNodesInitialized();
+
+  const cancelHide = useCallback(() => {
+    if (hideTimerRef.current !== null) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }, []);
+
+  const maybeScheduleHide = useCallback(() => {
+    cancelHide();
+    hideTimerRef.current = window.setTimeout(() => {
+      hideTimerRef.current = null;
+      if (!nodeHoverRef.current && !cardHoverRef.current) {
+        setHover(null);
+      }
+    }, 10);
+  }, [cancelHide]);
+
+  useEffect(() => () => cancelHide(), [cancelHide]);
 
   const layout = useMemo(() => buildLayout(agents), [agents]);
 
@@ -289,20 +306,36 @@ function TreeCanvasInner({ agents, isLoading, onAgentClick }: Props) {
       const nodeCenterX = rect.left + rect.width / 2 - frameRect.left;
       const nodeCenterY = rect.top + rect.height / 2 - frameRect.top;
 
-      const desiredLeft = nodeCenterX + 32;
+      const desiredLeft = nodeCenterX + 34;
       const desiredTop = nodeCenterY - 30;
 
-      const left = Math.max(8, Math.min(desiredLeft, frameRect.width - HOVER_W - 8));
-      const top = Math.max(8, Math.min(desiredTop, frameRect.height - 140));
+      const left = Math.max(
+        8,
+        Math.min(desiredLeft, frameRect.width - HOVER_W - 8),
+      );
+      const top = Math.max(8, Math.min(desiredTop, frameRect.height - 160));
 
+      nodeHoverRef.current = true;
+      cancelHide();
       setHover({ agent: data.agent, left, top });
     },
-    [],
+    [cancelHide],
   );
 
   const handleNodeLeave = useCallback<NodeMouseHandler>(() => {
-    setHover(null);
-  }, []);
+    nodeHoverRef.current = false;
+    maybeScheduleHide();
+  }, [maybeScheduleHide]);
+
+  const handleCardEnter = useCallback(() => {
+    cardHoverRef.current = true;
+    cancelHide();
+  }, [cancelHide]);
+
+  const handleCardLeave = useCallback(() => {
+    cardHoverRef.current = false;
+    maybeScheduleHide();
+  }, [maybeScheduleHide]);
 
   const handleNodeClick = useCallback<NodeMouseHandler>(
     (_, node) => {
@@ -314,6 +347,15 @@ function TreeCanvasInner({ agents, isLoading, onAgentClick }: Props) {
     },
     [onAgentClick],
   );
+
+  const handleCtaClick = useCallback(() => {
+    if (!hover) return;
+    cancelHide();
+    setSelectedId(hover.agent.tokenId.toString());
+    if (onAgentClick) onAgentClick(hover.agent);
+    else console.log("[tree] agent clicked:", hover.agent);
+    setHover(null);
+  }, [hover, cancelHide, onAgentClick]);
 
   const isEmpty = !isLoading && agents.length === 0;
 
@@ -345,12 +387,17 @@ function TreeCanvasInner({ agents, isLoading, onAgentClick }: Props) {
       <ZoomControls onFit={() => fitToAgents(200)} />
       <HoverHost>
         {hover && (
-          <HoverCard agent={hover.agent} left={hover.left} top={hover.top} />
+          <HoverCard
+            agent={hover.agent}
+            left={hover.left}
+            top={hover.top}
+            onMouseEnter={handleCardEnter}
+            onMouseLeave={handleCardLeave}
+            onCtaClick={handleCtaClick}
+          />
         )}
       </HoverHost>
-      {!isEmpty && (
-        <Hint>hover any node for details · click to open chat</Hint>
-      )}
+      {!isEmpty && <Hint>hover any node for details · click to open chat</Hint>}
       {isEmpty && <EmptyTree />}
     </Frame>
   );

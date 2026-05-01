@@ -45,4 +45,18 @@ export const mnemoAgentNftAbi = [
     ],
     outputs: [{ name: "", type: "string" }],
   },
+  {
+    type: "function",
+    name: "tokenIdForLabel",
+    stateMutability: "view",
+    inputs: [{ name: "label", type: "string" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "dataHashesOf",
+    stateMutability: "view",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "bytes32[]" }],
+  },
 ] as const;

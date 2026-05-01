@@ -5,6 +5,8 @@ import type { Agent } from "@/lib/agent";
 
 const HOVER_W = 220;
 
+const BRIDGE_W = 14;
+
 const Card = styled.div`
   position: absolute;
   z-index: 30;
@@ -13,9 +15,18 @@ const Card = styled.div`
   border: 0.5px solid ${({ theme }) => theme.line.strong};
   border-radius: ${({ theme }) => theme.radius.card};
   padding: 12px;
-  pointer-events: none;
+  pointer-events: auto;
   opacity: 0;
   animation: hoverFade 0.18s ease forwards;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -${BRIDGE_W}px;
+    width: ${BRIDGE_W}px;
+  }
 
   @keyframes hoverFade {
     from {
@@ -80,26 +91,51 @@ const Stats = styled.div`
   border-top: 0.5px solid ${({ theme }) => theme.line.faint};
 `;
 
-const Cta = styled.div`
+const Cta = styled.button`
+  display: block;
+  width: 100%;
   margin-top: 8px;
   padding: 5px 8px;
   background: rgba(232, 236, 241, 0.06);
+  border: 0.5px solid ${({ theme }) => theme.line.medium};
   border-radius: ${({ theme }) => theme.radius.chip};
   text-align: center;
   font-size: 9px;
   color: ${({ theme }) => theme.ink[1]};
   letter-spacing: 0.04em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: rgba(232, 236, 241, 0.14);
+  }
 `;
 
 type Props = {
   agent: Agent;
   left: number;
   top: number;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  onCtaClick?: () => void;
 };
 
-export default function HoverCard({ agent, left, top }: Props) {
+export default function HoverCard({
+  agent,
+  left,
+  top,
+  onMouseEnter,
+  onMouseLeave,
+  onCtaClick,
+}: Props) {
   return (
-    <Card style={{ left, top }} role="tooltip">
+    <Card
+      style={{ left, top }}
+      role="tooltip"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       <Top>
         <Glyph>{agent.glyph}</Glyph>
         <div>
@@ -111,7 +147,9 @@ export default function HoverCard({ agent, left, top }: Props) {
       <Stats>
         <span>{agent.children} children</span>
       </Stats>
-      <Cta>click to chat ↗</Cta>
+      <Cta type="button" onClick={onCtaClick}>
+        click to chat ↗
+      </Cta>
     </Card>
   );
 }

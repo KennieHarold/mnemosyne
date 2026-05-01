@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TreeCanvas from "@/components/tree/TreeCanvas";
 import { useAgents } from "@/hooks/useAgents";
-import type { Agent } from "@/lib/agent";
+import { labelFromAgent, type Agent } from "@/lib/agent";
 
 const Page = styled.div`
   height: 100vh;
@@ -96,6 +97,16 @@ function summarize(agents: Agent[]) {
 export default function TreePage() {
   const { agents, isLoading, isError } = useAgents();
   const stats = useMemo(() => summarize(agents), [agents]);
+  const router = useRouter();
+
+  const handleAgentClick = useCallback(
+    (agent: Agent) => {
+      const label = labelFromAgent(agent);
+      if (!label) return;
+      router.push(`/chat/${label}`);
+    },
+    [router],
+  );
 
   return (
     <Page>
@@ -122,7 +133,11 @@ export default function TreePage() {
             )}
           </Stats>
         </TreeHeader>
-        <TreeCanvas agents={agents} isLoading={isLoading} />
+        <TreeCanvas
+          agents={agents}
+          isLoading={isLoading}
+          onAgentClick={handleAgentClick}
+        />
       </Main>
       <Footer />
     </Page>

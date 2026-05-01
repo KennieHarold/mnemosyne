@@ -53,3 +53,11 @@ export function nameFromLabel(label: string): string {
   if (!label) return "";
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
+
+export function labelFromAgent(agent: Agent): string {
+  if (agent.ens) {
+    const stem = agent.ens.split(".")[0];
+    if (stem) return stem;
+  }
+  return agent.name.toLowerCase();
+}

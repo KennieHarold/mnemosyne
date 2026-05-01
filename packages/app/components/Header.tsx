@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react";
 import Link from "next/link";
 import styled from "styled-components";
 import { Address, formatUnits } from "viem";
@@ -168,7 +169,11 @@ function BalanceStat({ address }: { address: Address }) {
   );
 }
 
-export default function Header() {
+type HeaderProps = {
+  breadcrumb?: ReactNode;
+};
+
+export default function Header({ breadcrumb }: HeaderProps = {}) {
   const { address, isConnected } = useConnection();
 
   return (
@@ -178,17 +183,19 @@ export default function Header() {
         <Wordmark>MNEMO</Wordmark>
         <VersionChip>v1.0.0</VersionChip>
       </Brand>
-      <Nav aria-label="Primary">
-        <NavLink href="/directory">directory</NavLink>
-        <NavSep>·</NavSep>
-        <NavLink href="/tree">tree</NavLink>
-        <NavSep>·</NavSep>
-        <NavLink href="/mint">mint</NavLink>
-        <NavSep>·</NavSep>
-        <NavLink href="/breed">breed</NavLink>
-        <NavSep>·</NavSep>
-        <NavLink href="/royalties">royalties</NavLink>
-      </Nav>
+      {breadcrumb ?? (
+        <Nav aria-label="Primary">
+          <NavLink href="/directory">directory</NavLink>
+          <NavSep>·</NavSep>
+          <NavLink href="/tree">tree</NavLink>
+          <NavSep>·</NavSep>
+          <NavLink href="/mint">mint</NavLink>
+          <NavSep>·</NavSep>
+          <NavLink href="/breed">breed</NavLink>
+          <NavSep>·</NavSep>
+          <NavLink href="/royalties">royalties</NavLink>
+        </Nav>
+      )}
       <Right>
         {isConnected && address && (
           <>
