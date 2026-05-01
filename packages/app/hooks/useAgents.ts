@@ -15,8 +15,30 @@ const GC_TIME = 5 * 60_000;
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 
-const TEXT_KEYS = ["tagline", "generation"] as const;
+const TEXT_KEYS = ["tagline", "generation", "parents", "children"] as const;
 type TextKey = (typeof TEXT_KEYS)[number];
+
+function parseParentIds(value: string): [bigint, bigint] | null {
+  if (!value) return null;
+  const parts = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length !== 2) return null;
+  try {
+    return [BigInt(parts[0]), BigInt(parts[1])];
+  } catch {
+    return null;
+  }
+}
+
+function countChildren(value: string): number {
+  if (!value) return 0;
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean).length;
+}
 
 type UseAgentsResult = {
   agents: Agent[];
@@ -77,7 +99,8 @@ export function useAgents(): UseAgentsResult {
     for (let i = 0; i < totalMinted; i++) {
       const labelResult = baseReads.data[i * 2 + 1];
       const label =
-        labelResult?.status === "success" && typeof labelResult.result === "string"
+        labelResult?.status === "success" &&
+        typeof labelResult.result === "string"
           ? labelResult.result
           : "";
       out.push(label);
@@ -140,26 +163,32 @@ export function useAgents(): UseAgentsResult {
     for (let i = 0; i < totalMinted; i++) {
       const ownerResult = baseData[i * 2];
       const owner =
-        ownerResult?.status === "success" && typeof ownerResult.result === "string"
+        ownerResult?.status === "success" &&
+        typeof ownerResult.result === "string"
           ? (ownerResult.result as Address)
           : ZERO_ADDRESS;
 
       const label = labels[i] ?? "";
       const text = textByLabel.get(label);
-      const generation = Number.parseInt(text?.generation ?? "", 10);
+      const parentIds = parseParentIds(text?.parents ?? "");
+      const parsedGen = Number.parseInt(text?.generation ?? "", 10);
+
+      const generation =
+        Number.isFinite(parsedGen) && parsedGen >= 0 ? parsedGen : 0;
 
       built.push({
         tokenId: BigInt(i),
         owner,
         name: nameFromLabel(label),
         ens: label ? `${label}.mnemo.eth` : "",
-        generation: Number.isFinite(generation) ? generation : 0,
-        parentIds: null,
+        generation,
+        parentIds,
         tagline: text?.tagline ?? "",
         chats: 0,
-        children: 0,
+        children: countChildren(text?.children ?? ""),
         glyph: glyphForLabel(label),
       });
+      console.log(built);
     }
     return built;
   }, [baseData, textData, labels, totalMinted]);
