@@ -4,7 +4,7 @@ import Link from "next/link";
 import styled from "styled-components";
 import type { Agent } from "@/lib/agent";
 import { labelFromAgent } from "@/lib/agent";
-import type { AgentExtras } from "@/lib/chat";
+import type { AgentExtras, LineageParent } from "@/lib/chat";
 import LineageMini from "./LineageMini";
 import ProvenanceTable from "./ProvenanceTable";
 
@@ -257,13 +257,14 @@ const GhostAction = styled.button`
 type Props = {
   agent: Agent;
   extras: AgentExtras;
+  parents: LineageParent[];
 };
 
 function pad2(n: number): string {
   return Math.max(0, Math.trunc(n)).toString().padStart(2, "0");
 }
 
-export default function AgentSidebar({ agent, extras }: Props) {
+export default function AgentSidebar({ agent, extras, parents }: Props) {
   const label = labelFromAgent(agent);
   const visibleTraits = extras.traits.slice(0, TRAITS_VISIBLE);
   const overflow = Math.max(0, extras.traits.length - TRAITS_VISIBLE);
@@ -360,7 +361,7 @@ export default function AgentSidebar({ agent, extras }: Props) {
       <Section>
         <Comment>{"// LINEAGE"}</Comment>
         <LineageMini
-          parents={extras.parents}
+          parents={parents}
           selfName={agent.name}
           selfGlyph={agent.glyph}
           childCount={agent.children}

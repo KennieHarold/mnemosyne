@@ -14,6 +14,7 @@ import {
   getAgentExtras,
   getIntroMessage,
   getSuggestions,
+  resolveLineageParents,
 } from "@/lib/chat";
 
 const Page = styled.div`
@@ -110,6 +111,10 @@ export default function ChatPage({ params }: Props) {
   );
 
   const extras = useMemo(() => getAgentExtras(label), [label]);
+  const parents = useMemo(
+    () => (agent ? resolveLineageParents(agent, agents) : []),
+    [agent, agents],
+  );
   const initialMessages = useMemo(() => [getIntroMessage(label)], [label]);
   const suggestions = useMemo(() => getSuggestions(), []);
 
@@ -159,7 +164,7 @@ export default function ChatPage({ params }: Props) {
     <Page>
       <Header breadcrumb={<Breadcrumb leaf={agent.ens} />} />
       <Main>
-        <AgentSidebar agent={agent} extras={extras} />
+        <AgentSidebar agent={agent} extras={extras} parents={parents} />
         <ChatPanel
           label={label}
           initialMessages={initialMessages}

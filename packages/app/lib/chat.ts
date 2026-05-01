@@ -1,4 +1,4 @@
-import { glyphForLabel, nameFromLabel } from "@/lib/agent";
+import { labelFromAgent, nameFromLabel, type Agent } from "@/lib/agent";
 
 export type MemoryWrite = {
   kind: "write";
@@ -37,17 +37,11 @@ export type AgentExtras = {
   agentId: string;
   traits: string[];
   memoriesCount: number;
-  parents: LineageParent[];
   provenance: AgentProvenance;
   sessionId: string;
   sessionOpenedAt: string;
   memoriesWritten: number;
 };
-
-const DEFAULT_PARENTS: LineageParent[] = [
-  { label: "socrates", name: "Socrates", glyph: glyphForLabel("socrates") },
-  { label: "sappho", name: "Sappho", glyph: glyphForLabel("sappho") },
-];
 
 const DEFAULT_TRAITS = [
   "curious",
@@ -75,7 +69,6 @@ export function getAgentExtras(label: string): AgentExtras {
     agentId: id,
     traits: DEFAULT_TRAITS.slice(0, 5),
     memoriesCount: 120 + (h % 380),
-    parents: DEFAULT_PARENTS,
     provenance: {
       inft: `0G:${id}…${(h ^ 0xa5a5).toString(16).padStart(4, "0").slice(0, 4)}`,
       root: `Qm…${(h ^ 0x5a5a).toString(16).padStart(4, "0").slice(0, 4)}`,
@@ -86,6 +79,25 @@ export function getAgentExtras(label: string): AgentExtras {
     sessionOpenedAt: "today · 14:22 utc",
     memoriesWritten: 0,
   };
+}
+
+export function resolveLineageParents(
+  agent: Agent,
+  agents: Agent[],
+): LineageParent[] {
+  if (!agent.parentIds) return [];
+  const byId = new Map(agents.map((a) => [a.tokenId, a]));
+  const out: LineageParent[] = [];
+  for (const id of agent.parentIds) {
+    const parent = byId.get(id);
+    if (!parent) continue;
+    out.push({
+      label: labelFromAgent(parent),
+      name: parent.name,
+      glyph: parent.glyph,
+    });
+  }
+  return out;
 }
 
 export function getIntroMessage(label: string): ChatMessage {
