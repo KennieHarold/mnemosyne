@@ -8,6 +8,7 @@ export type Agent = {
   generation: number;
   parentIds: [bigint, bigint] | null;
   tagline: string;
+  traits: string[];
   chats: number;
   children: number;
   glyph: string;

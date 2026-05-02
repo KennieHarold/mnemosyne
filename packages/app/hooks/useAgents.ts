@@ -15,8 +15,22 @@ const GC_TIME = 5 * 60_000;
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 
-const TEXT_KEYS = ["tagline", "generation", "parents", "children"] as const;
+const TEXT_KEYS = [
+  "tagline",
+  "generation",
+  "parents",
+  "children",
+  "traits",
+] as const;
 type TextKey = (typeof TEXT_KEYS)[number];
+
+function parseTraits(value: string): string[] {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 function parseParentIds(value: string): [bigint, bigint] | null {
   if (!value) return null;
@@ -184,11 +198,11 @@ export function useAgents(): UseAgentsResult {
         generation,
         parentIds,
         tagline: text?.tagline ?? "",
+        traits: parseTraits(text?.traits ?? ""),
         chats: 0,
         children: countChildren(text?.children ?? ""),
         glyph: glyphForLabel(label),
       });
-      console.log(built);
     }
     return built;
   }, [baseData, textData, labels, totalMinted]);

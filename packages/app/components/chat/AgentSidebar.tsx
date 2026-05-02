@@ -204,6 +204,12 @@ const Chip = styled.span<{ $muted?: boolean }>`
   color: ${({ $muted, theme }) => ($muted ? theme.ink[2] : theme.ink[1])};
 `;
 
+const EmptyChips = styled.span`
+  font-size: 10px;
+  color: ${({ theme }) => theme.ink[3]};
+  letter-spacing: 0.04em;
+`;
+
 const Actions = styled.div`
   margin-top: auto;
   padding: 14px 18px;
@@ -236,24 +242,6 @@ const PrimaryAction = styled(Link)`
   }
 `;
 
-const GhostAction = styled.button`
-  width: 100%;
-  font-family: inherit;
-  font-size: 11px;
-  padding: 8px;
-  background: transparent;
-  color: ${({ theme }) => theme.ink[2]};
-  border: 0.5px solid ${({ theme }) => theme.line.medium};
-  border-radius: ${({ theme }) => theme.radius.default};
-  letter-spacing: 0.04em;
-  transition: color 0.12s ease, border-color 0.12s ease;
-
-  &:hover {
-    color: ${({ theme }) => theme.ink[1]};
-    border-color: ${({ theme }) => theme.line.strong};
-  }
-`;
-
 type Props = {
   agent: Agent;
   extras: AgentExtras;
@@ -266,8 +254,8 @@ function pad2(n: number): string {
 
 export default function AgentSidebar({ agent, extras, parents }: Props) {
   const label = labelFromAgent(agent);
-  const visibleTraits = extras.traits.slice(0, TRAITS_VISIBLE);
-  const overflow = Math.max(0, extras.traits.length - TRAITS_VISIBLE);
+  const visibleTraits = agent.traits.slice(0, TRAITS_VISIBLE);
+  const overflow = Math.max(0, agent.traits.length - TRAITS_VISIBLE);
 
   return (
     <Aside>
@@ -339,7 +327,7 @@ export default function AgentSidebar({ agent, extras, parents }: Props) {
           </StatCell>
           <StatCell>
             <StatLabel>MEMORIES</StatLabel>
-            <StatValue>{extras.memoriesCount.toLocaleString()}</StatValue>
+            <StatValue>0</StatValue>
           </StatCell>
           <StatCell>
             <StatLabel>CHILDREN</StatLabel>
@@ -351,10 +339,16 @@ export default function AgentSidebar({ agent, extras, parents }: Props) {
       <Section>
         <Comment>{"// TRAITS"}</Comment>
         <Chips>
-          {visibleTraits.map((t) => (
-            <Chip key={t}>{t}</Chip>
-          ))}
-          {overflow > 0 && <Chip $muted>+{overflow}</Chip>}
+          {visibleTraits.length > 0 ? (
+            <>
+              {visibleTraits.map((t) => (
+                <Chip key={t}>{t}</Chip>
+              ))}
+              {overflow > 0 && <Chip $muted>+{overflow}</Chip>}
+            </>
+          ) : (
+            <EmptyChips>no traits on record</EmptyChips>
+          )}
         </Chips>
       </Section>
 
@@ -377,12 +371,6 @@ export default function AgentSidebar({ agent, extras, parents }: Props) {
         <PrimaryAction href={`/breed?with=${label}`}>
           [ breed {label} → ]
         </PrimaryAction>
-        <GhostAction
-          type="button"
-          onClick={() => console.log("[chat] view memory log:", label)}
-        >
-          view memory log
-        </GhostAction>
       </Actions>
     </Aside>
   );
