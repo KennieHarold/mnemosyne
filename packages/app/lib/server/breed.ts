@@ -1,12 +1,11 @@
 import "server-only";
 
 import * as crypto from "crypto";
-import * as fs from "fs/promises";
-import { ethers, JsonRpcProvider, Wallet } from "ethers";
+import { JsonRpcProvider, Wallet } from "ethers";
 import OpenAI from "openai";
-import { Indexer, ZgFile } from "@0gfoundation/0g-ts-sdk";
+import { Indexer } from "@0gfoundation/0g-ts-sdk";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
-import { createPublicClient, http, keccak256, type Hex } from "viem";
+import { createPublicClient, http, type Hex } from "viem";
 
 import { mnemoAgentNftAbi, mnemoAgentNftAddress } from "../contracts";
 import { zeroGGalileoTestnet } from "../wagmi";
@@ -24,6 +23,7 @@ import {
   truncate,
   withRetry,
 } from "./utils";
+import { encryptAndUploadIntelligence } from "./intelligence";
 
 const RPC_URL = "https://evmrpc-testnet.0g.ai";
 const INDEXER_URL = "https://indexer-storage-testnet-turbo.0g.ai";
@@ -456,44 +456,7 @@ async function uploadEncryptedSchema(
   encryptionKey: Buffer,
   privateKey: string,
 ): Promise<{ encryptedURI: Hex; metadataHash: Hex }> {
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", encryptionKey, iv);
-  const data = Buffer.from(JSON.stringify(schema));
-  const ciphertext = Buffer.concat([cipher.update(data), cipher.final()]);
-  const authTag = cipher.getAuthTag();
-  const blob = Buffer.concat([iv, authTag, ciphertext]);
-
-  const tmpPath = `/tmp/agent-${Date.now()}-${crypto
-    .randomBytes(4)
-    .toString("hex")}.enc`;
-  await fs.writeFile(tmpPath, blob);
-
-  try {
-    const file = await ZgFile.fromFilePath(tmpPath);
-    const [tree, treeErr] = await file.merkleTree();
-    if (treeErr) throw new Error(`Merkle tree failed: ${treeErr}`);
-
-    const indexer = new Indexer(INDEXER_URL);
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const signer = new ethers.Wallet(privateKey, provider);
-
-    const [, err] = await indexer.upload(
-      file,
-      RPC_URL,
-      signer as unknown as Parameters<typeof indexer.upload>[2],
-    );
-    if (err) {
-      throw new Error(`Upload failed: ${err}`);
-    }
-
-    await file.close();
-
-    const encryptedURI = tree!.rootHash() as Hex;
-    const metadataHash = keccak256(blob);
-    return { encryptedURI, metadataHash };
-  } finally {
-    await fs.unlink(tmpPath).catch(() => {});
-  }
+  return encryptAndUploadIntelligence(schema, encryptionKey, privateKey);
 }
 
 function ensureUniqueLabel(base: string, taken: string[]): string {

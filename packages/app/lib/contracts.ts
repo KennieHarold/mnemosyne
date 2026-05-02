@@ -68,6 +68,36 @@ export const mnemoAgentNftAbi = [
   },
   {
     type: "function",
+    name: "isLabelReserved",
+    stateMutability: "view",
+    inputs: [{ name: "label", type: "string" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "mintWithSubname",
+    stateMutability: "payable",
+    inputs: [
+      { name: "proofs", type: "bytes[]" },
+      { name: "dataDescriptions", type: "string[]" },
+      { name: "to", type: "address" },
+      { name: "label", type: "string" },
+    ],
+    outputs: [{ name: "tokenId", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "setTexts",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "tokenId", type: "uint256" },
+      { name: "keys", type: "string[]" },
+      { name: "values", type: "string[]" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
     name: "breed",
     stateMutability: "nonpayable",
     inputs: [
