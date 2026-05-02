@@ -7,13 +7,13 @@ import { Indexer } from "@0gfoundation/0g-ts-sdk";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import { createPublicClient, http, type Hex } from "viem";
 
-import { mnemoAgentNftAbi, mnemoAgentNftAddress } from "../contracts";
-import { zeroGGalileoTestnet } from "../wagmi";
+import { mnemoAgentNftAbi, mnemoAgentNftAddress } from "../lib/contracts";
+import { zeroGGalileoTestnet } from "../lib/wagmi";
 import type {
   AgentIntelligence,
   BreedEvent,
   ParentSummary,
-} from "../breed-events";
+} from "../lib/breed-events";
 import {
   capitalize,
   clampArray,

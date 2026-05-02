@@ -3,7 +3,7 @@ import {
   validateMintForm,
   type MintFormState,
 } from "@/lib/mint";
-import { prepareGenesisMint } from "@/lib/server/mint";
+import { prepareGenesisMint } from "@/server/mint";
 
 export async function POST(request: NextRequest) {
   let body: unknown;

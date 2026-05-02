@@ -1,7 +1,7 @@
 import "server-only";
 
 import { type Hex } from "viem";
-import type { AgentIntelligence } from "../breed-events";
+import type { AgentIntelligence } from "../lib/breed-events";
 import {
   encryptAndUploadIntelligence,
   type UploadedIntelligence,

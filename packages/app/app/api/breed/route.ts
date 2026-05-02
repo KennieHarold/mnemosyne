@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { breedIntelligenceStream } from "@/lib/server/breed";
+import { breedIntelligenceStream } from "@/server/breed";
 import type { BreedEvent } from "@/lib/breed-events";
 
 type BreedRequestBody = {

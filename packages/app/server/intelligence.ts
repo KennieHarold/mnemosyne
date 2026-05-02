@@ -5,7 +5,7 @@ import * as fs from "fs/promises";
 import { ethers } from "ethers";
 import { Indexer, ZgFile } from "@0gfoundation/0g-ts-sdk";
 import { keccak256, type Hex } from "viem";
-import type { AgentIntelligence } from "../breed-events";
+import type { AgentIntelligence } from "../lib/breed-events";
 
 const RPC_URL = "https://evmrpc-testnet.0g.ai";
 const INDEXER_URL = "https://indexer-storage-testnet-turbo.0g.ai";
