@@ -54,6 +54,17 @@ function leftmostLabel(name: string): string {
   return name.split(".")[0]!;
 }
 
+function normalizePrivateKey(raw: string): Hex {
+  const trimmed = raw.trim();
+  const withPrefix = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
+  if (!/^0x[0-9a-fA-F]{64}$/.test(withPrefix)) {
+    throw new Error(
+      "GATEWAY_SIGNER_PRIVATE_KEY must be a 32-byte hex string (with or without 0x prefix)",
+    );
+  }
+  return withPrefix as Hex;
+}
+
 async function signResponse(
   sender: Address,
   request: Hex,
@@ -102,7 +113,10 @@ function buildRouter(env: Secret) {
       if (inner.status !== 200) {
         throw new Error(`Inner dispatch failed: ${JSON.stringify(inner.body)}`);
       }
-      return [(inner.body as { data: Hex }).data];
+      return encodeAbiParameters(
+        [{ type: "bytes" }],
+        [(inner.body as { data: Hex }).data],
+      );
     },
   });
 
@@ -115,7 +129,7 @@ function buildRouter(env: Secret) {
         functionName: "addressForLabel",
         args: [currentLabel],
       });
-      return [address];
+      return encodeAbiParameters([{ type: "address" }], [address]);
     },
   });
 
@@ -123,16 +137,16 @@ function buildRouter(env: Secret) {
     type: "function addr(bytes32 node, uint256 coinType) returns (bytes)",
     handle: async ([, coinType]) => {
       // coinType 60 = ETH; for other chains return empty
-      if (coinType !== 60n) {
-        return ["0x" as Hex];
-      }
-      const address = await zeroG.readContract({
-        address: env.INFT_CONTRACT,
-        abi: iNFTAbi,
-        functionName: "addressForLabel",
-        args: [currentLabel],
-      });
-      return [address.toLowerCase() as Hex];
+      const addressBytes: Hex =
+        coinType === 60n
+          ? ((await zeroG.readContract({
+              address: env.INFT_CONTRACT,
+              abi: iNFTAbi,
+              functionName: "addressForLabel",
+              args: [currentLabel],
+            })) as Hex)
+          : "0x";
+      return encodeAbiParameters([{ type: "bytes" }], [addressBytes]);
     },
   });
 
@@ -145,11 +159,28 @@ function buildRouter(env: Secret) {
         functionName: "textForLabel",
         args: [currentLabel, key],
       });
-      return [value];
+      return encodeAbiParameters([{ type: "string" }], [value]);
     },
   });
 
   return router;
+}
+
+async function parseRequest(
+  request: Request,
+): Promise<{ sender: Address; data: Hex }> {
+  if (request.method === "GET") {
+    // EIP-3668 GET form: /<sender>/<data>.json
+    const url = new URL(request.url);
+    const parts = url.pathname.replace(/^\/+/, "").split("/");
+    if (parts.length < 2) {
+      throw new Error(`Invalid GET path: ${url.pathname}`);
+    }
+    const sender = parts[0] as Address;
+    const data = parts[1]!.replace(/\.json$/, "") as Hex;
+    return { sender, data };
+  }
+  return (await request.json()) as { sender: Address; data: Hex };
 }
 
 export default {
@@ -157,10 +188,7 @@ export default {
     try {
       const router = buildRouter(env);
 
-      const { sender, data } = (await request.clone().json()) as {
-        sender: Address;
-        data: Hex;
-      };
+      const { sender, data } = await parseRequest(request);
 
       const callResult = await router.call({ to: sender, data });
       if (callResult.status !== 200) {
@@ -173,7 +201,7 @@ export default {
         sender,
         data,
         result,
-        env.GATEWAY_SIGNER_PRIVATE_KEY,
+        normalizePrivateKey(env.GATEWAY_SIGNER_PRIVATE_KEY),
       );
 
       return Response.json(signed, {

@@ -6,3 +6,8 @@ compatibility_date = "2024-09-01"
 ZERO_G_RPC = "https://evmrpc-testnet.0g.ai"
 INFT_CONTRACT = "0x93224547FF5a9B24c24E92d77BEd6f2D729611C8"
 RESOLVER_ADDRESS = "0xB0d33Aa069dD4F55765BFF8be757848622c6e85C"
+
+[observability]
+[observability.logs]
+enabled = false
+invocation_logs = true
