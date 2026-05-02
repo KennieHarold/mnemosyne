@@ -10,13 +10,11 @@ import JSONStream from "@/components/breed/JSONStream";
 import SequenceChecklist from "@/components/breed/SequenceChecklist";
 import RoyaltySplit from "@/components/breed/RoyaltySplit";
 import CompletionBanner from "@/components/breed/CompletionBanner";
+import ParentPicker from "@/components/breed/ParentPicker";
 import { useBreedCeremony } from "@/hooks/useBreedCeremony";
 import { useAgents } from "@/hooks/useAgents";
 import { labelFromAgent, type Agent } from "@/lib/agent";
 import type { BreedPhase } from "@/lib/breed-events";
-
-const DEFAULT_P1 = "socrates";
-const DEFAULT_P2 = "sherlock";
 
 const Page = styled.div`
   height: 100vh;
@@ -246,10 +244,13 @@ function findAgentByLabel(agents: Agent[], label: string): Agent | undefined {
 
 function BreedPageInner() {
   const search = useSearchParams();
-  const parent1Label = (search.get("p1") ?? search.get("with") ?? DEFAULT_P1)
-    .trim()
-    .toLowerCase();
-  const parent2Label = (search.get("p2") ?? DEFAULT_P2).trim().toLowerCase();
+  const [parent1Label, setParent1Label] = useState(() =>
+    (search.get("p1") ?? search.get("with") ?? "").trim().toLowerCase(),
+  );
+  const [parent2Label, setParent2Label] = useState(() =>
+    (search.get("p2") ?? "").trim().toLowerCase(),
+  );
+  const [pickerSlot, setPickerSlot] = useState<1 | 2 | null>(null);
 
   const { agents } = useAgents();
   const parent1Agent = useMemo(
@@ -259,6 +260,11 @@ function BreedPageInner() {
   const parent2Agent = useMemo(
     () => findAgentByLabel(agents, parent2Label),
     [agents, parent2Label],
+  );
+
+  const selectableAgents = useMemo(
+    () => agents.filter((a) => labelFromAgent(a)),
+    [agents],
   );
 
   const ceremony = useBreedCeremony({ parent1Label, parent2Label });
@@ -308,7 +314,31 @@ function BreedPageInner() {
         ? "halted"
         : "idle";
 
-  const sameLabel = parent1Label === parent2Label;
+  const missingParent = !parent1Label || !parent2Label;
+  const sameLabel =
+    !missingParent && parent1Label === parent2Label;
+  const canEditParents = !isRunning;
+
+  const startMessage = !ceremony.isConnected
+    ? "[ connect wallet to begin → ]"
+    : missingParent
+      ? "[ select two parents to begin ]"
+      : sameLabel
+        ? "[ choose two distinct parents ]"
+        : "[ begin ceremony → ]";
+
+  const handleParent1Click = canEditParents
+    ? () => setPickerSlot(1)
+    : undefined;
+  const handleParent2Click = canEditParents
+    ? () => setPickerSlot(2)
+    : undefined;
+
+  const handlePickerSelect = (label: string) => {
+    if (pickerSlot === 1) setParent1Label(label);
+    else if (pickerSlot === 2) setParent2Label(label);
+    setPickerSlot(null);
+  };
 
   return (
     <Page>
@@ -345,19 +375,19 @@ function BreedPageInner() {
             parent1DisplayName={parent1Agent?.name}
             parent2DisplayName={parent2Agent?.name}
             child={ceremony.child}
+            onParent1Click={handleParent1Click}
+            onParent2Click={handleParent2Click}
           />
           <Controls>
             {ceremony.phase === "idle" || ceremony.phase === "error" ? (
               <PrimaryBtn
                 type="button"
                 onClick={ceremony.start}
-                disabled={!ceremony.isConnected || sameLabel}
+                disabled={
+                  !ceremony.isConnected || missingParent || sameLabel
+                }
               >
-                {!ceremony.isConnected
-                  ? "[ connect wallet to begin → ]"
-                  : sameLabel
-                    ? "[ choose two distinct parents ]"
-                    : "[ begin ceremony → ]"}
+                {startMessage}
               </PrimaryBtn>
             ) : (
               <PrimaryBtn
@@ -408,6 +438,17 @@ function BreedPageInner() {
         </Grid>
       </Main>
       <Footer />
+      {pickerSlot !== null && (
+        <ParentPicker
+          open
+          slot={pickerSlot}
+          agents={selectableAgents}
+          selectedLabel={pickerSlot === 1 ? parent1Label : parent2Label}
+          excludeLabel={pickerSlot === 1 ? parent2Label : parent1Label}
+          onSelect={handlePickerSelect}
+          onClose={() => setPickerSlot(null)}
+        />
+      )}
     </Page>
   );
 }

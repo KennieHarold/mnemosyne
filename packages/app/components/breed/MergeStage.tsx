@@ -24,6 +24,8 @@ type Props = {
   parent1DisplayName?: string;
   parent2DisplayName?: string;
   child: AgentIntelligence | null;
+  onParent1Click?: () => void;
+  onParent2Click?: () => void;
 };
 
 type Particle = {
@@ -84,9 +86,29 @@ const StageSvg = styled.svg`
   overflow: visible;
 `;
 
-const ParentGroup = styled.g<{ $shifted: boolean }>`
+const ParentGroup = styled.g<{ $shifted: boolean; $clickable: boolean }>`
   transition: transform 1.2s cubic-bezier(0.34, 1.2, 0.64, 1);
   transform-origin: 0 0;
+  ${({ $clickable }) =>
+    $clickable &&
+    css`
+      cursor: pointer;
+
+      & .parent-core {
+        transition:
+          stroke 0.18s ease,
+          stroke-width 0.18s ease;
+      }
+
+      &:hover .parent-core {
+        stroke: #5dcaa5;
+        stroke-width: 1;
+      }
+
+      &:hover .parent-hint {
+        opacity: 1;
+      }
+    `}
   ${({ $shifted }) =>
     $shifted &&
     css`
@@ -97,6 +119,30 @@ const ParentGroup = styled.g<{ $shifted: boolean }>`
         transform: translateX(-40px);
       }
     `}
+`;
+
+const ParentHint = styled.text`
+  font-family: ${({ theme }) => theme.font.mono};
+  font-size: 8px;
+  fill: ${({ theme }) => theme.signal.live};
+  letter-spacing: 0.12em;
+  text-anchor: middle;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+`;
+
+const PlaceholderGlyph = styled.text`
+  font-family: ${({ theme }) => theme.font.mono};
+  font-size: 22px;
+  fill: ${({ theme }) => theme.ink[2]};
+  text-anchor: middle;
+`;
+
+const PlaceholderName = styled.text`
+  font-family: ${({ theme }) => theme.font.mono};
+  font-size: 10px;
+  fill: ${({ theme }) => theme.ink[2]};
+  letter-spacing: 0.04em;
 `;
 
 const HaloRing = styled.circle<{ $active: boolean; $delay: number }>`
@@ -229,6 +275,8 @@ export default function MergeStage({
   parent1DisplayName,
   parent2DisplayName,
   child,
+  onParent1Click,
+  onParent2Click,
 }: Props) {
   const particlesRef = useRef<Particle[]>(makeParticlePool());
   const particleNodesRef = useRef<(SVGCircleElement | null)[]>([]);
@@ -357,7 +405,15 @@ export default function MergeStage({
           ))}
         </g>
 
-        <ParentGroup className="left" $shifted={mergeActive}>
+        <ParentGroup
+          className="left"
+          $shifted={mergeActive}
+          $clickable={Boolean(onParent1Click)}
+          onClick={onParent1Click}
+          tabIndex={onParent1Click ? 0 : undefined}
+          role={onParent1Click ? "button" : undefined}
+          aria-label={onParent1Click ? "select parent 1" : undefined}
+        >
           <g transform={`translate(${LEFT_X}, ${CENTER_Y})`}>
             <circle
               r={44}
@@ -368,18 +424,49 @@ export default function MergeStage({
               opacity={0.5}
             />
             <HaloRing r={38} $active={halosOn} $delay={0} />
-            <circle r={NODE_R} fill="#0E1220" stroke="#E8ECF1" strokeWidth={0.6} />
-            <Glyph y={6}>{glyphForLabel(parent1Label)}</Glyph>
-            <ParentName y={56} textAnchor="middle">
-              {parent1Display.toLowerCase()}
-            </ParentName>
-            <ParentEns y={69} textAnchor="middle">
-              {`${parent1Label}.mnemo.eth`}
-            </ParentEns>
+            <circle
+              className="parent-core"
+              r={NODE_R}
+              fill="#0E1220"
+              stroke={parent1Label ? "#E8ECF1" : "#5A6478"}
+              strokeWidth={0.6}
+              strokeDasharray={parent1Label ? undefined : "3 3"}
+            />
+            {parent1Label ? (
+              <>
+                <Glyph y={6}>{glyphForLabel(parent1Label)}</Glyph>
+                <ParentName y={56} textAnchor="middle">
+                  {parent1Display.toLowerCase()}
+                </ParentName>
+                <ParentEns y={69} textAnchor="middle">
+                  {`${parent1Label}.mnemo.eth`}
+                </ParentEns>
+              </>
+            ) : (
+              <>
+                <PlaceholderGlyph y={9}>+</PlaceholderGlyph>
+                <PlaceholderName y={56} textAnchor="middle">
+                  click to select
+                </PlaceholderName>
+              </>
+            )}
+            {onParent1Click && parent1Label && (
+              <ParentHint className="parent-hint" y={82}>
+                click to change
+              </ParentHint>
+            )}
           </g>
         </ParentGroup>
 
-        <ParentGroup className="right" $shifted={mergeActive}>
+        <ParentGroup
+          className="right"
+          $shifted={mergeActive}
+          $clickable={Boolean(onParent2Click)}
+          onClick={onParent2Click}
+          tabIndex={onParent2Click ? 0 : undefined}
+          role={onParent2Click ? "button" : undefined}
+          aria-label={onParent2Click ? "select parent 2" : undefined}
+        >
           <g transform={`translate(${RIGHT_X}, ${CENTER_Y})`}>
             <circle
               r={44}
@@ -390,14 +477,37 @@ export default function MergeStage({
               opacity={0.5}
             />
             <HaloRingDelayed r={38} $active={halosOn} $delay={0.5} />
-            <circle r={NODE_R} fill="#0E1220" stroke="#E8ECF1" strokeWidth={0.6} />
-            <Glyph y={6}>{glyphForLabel(parent2Label)}</Glyph>
-            <ParentName y={56} textAnchor="middle">
-              {parent2Display.toLowerCase()}
-            </ParentName>
-            <ParentEns y={69} textAnchor="middle">
-              {`${parent2Label}.mnemo.eth`}
-            </ParentEns>
+            <circle
+              className="parent-core"
+              r={NODE_R}
+              fill="#0E1220"
+              stroke={parent2Label ? "#E8ECF1" : "#5A6478"}
+              strokeWidth={0.6}
+              strokeDasharray={parent2Label ? undefined : "3 3"}
+            />
+            {parent2Label ? (
+              <>
+                <Glyph y={6}>{glyphForLabel(parent2Label)}</Glyph>
+                <ParentName y={56} textAnchor="middle">
+                  {parent2Display.toLowerCase()}
+                </ParentName>
+                <ParentEns y={69} textAnchor="middle">
+                  {`${parent2Label}.mnemo.eth`}
+                </ParentEns>
+              </>
+            ) : (
+              <>
+                <PlaceholderGlyph y={9}>+</PlaceholderGlyph>
+                <PlaceholderName y={56} textAnchor="middle">
+                  click to select
+                </PlaceholderName>
+              </>
+            )}
+            {onParent2Click && parent2Label && (
+              <ParentHint className="parent-hint" y={82}>
+                click to change
+              </ParentHint>
+            )}
           </g>
         </ParentGroup>
 
