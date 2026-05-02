@@ -2,13 +2,34 @@
 
 import Link from "next/link";
 import styled from "styled-components";
+import { useReadContract } from "wagmi";
 import type { Agent } from "@/lib/agent";
 import { labelFromAgent } from "@/lib/agent";
-import type { AgentExtras, LineageParent } from "@/lib/chat";
+import type { AgentExtras, AgentProvenance, LineageParent } from "@/lib/chat";
+import {
+  mnemoAgentNftAbi,
+  mnemoAgentNftAddress,
+  mnemoAgentNftChainId,
+} from "@/lib/contracts";
 import LineageMini from "./LineageMini";
 import ProvenanceTable from "./ProvenanceTable";
 
 const TRAITS_VISIBLE = 5;
+
+function shortHex(value: string, head = 6, tail = 4): string {
+  if (!value) return "—";
+  if (value.length <= head + tail + 1) return value;
+  return `${value.slice(0, head)}…${value.slice(-tail)}`;
+}
+
+function buildProvenance(agent: Agent, tokenURI: string): AgentProvenance {
+  return {
+    inft: `${shortHex(mnemoAgentNftAddress)}·#${agent.tokenId.toString()}`,
+    root: tokenURI ? shortHex(tokenURI) : "pending",
+    seal: "aes·256·gcm",
+    owner: shortHex(agent.owner),
+  };
+}
 
 const Aside = styled.aside`
   border-right: 0.5px solid ${({ theme }) => theme.line.default};
@@ -257,6 +278,18 @@ export default function AgentSidebar({ agent, extras, parents }: Props) {
   const visibleTraits = agent.traits.slice(0, TRAITS_VISIBLE);
   const overflow = Math.max(0, agent.traits.length - TRAITS_VISIBLE);
 
+  const tokenURIRead = useReadContract({
+    address: mnemoAgentNftAddress,
+    abi: mnemoAgentNftAbi,
+    functionName: "tokenURI",
+    args: [agent.tokenId],
+    chainId: mnemoAgentNftChainId,
+  });
+
+  const tokenURI =
+    typeof tokenURIRead.data === "string" ? tokenURIRead.data : "";
+  const provenance = buildProvenance(agent, tokenURI);
+
   return (
     <Aside>
       <Section>
@@ -364,7 +397,7 @@ export default function AgentSidebar({ agent, extras, parents }: Props) {
 
       <Section>
         <Comment>{"// PROVENANCE"}</Comment>
-        <ProvenanceTable provenance={extras.provenance} />
+        <ProvenanceTable provenance={provenance} />
       </Section>
 
       <Actions>

@@ -24,10 +24,9 @@ const Side = styled.span`
 export default function Footer() {
   return (
     <Bar>
-      <Side>0g·chain · base·sepolia · ens·durin · sealed inference</Side>
+      <Side>0g·chain · base·sepolia · ens · sealed inference</Side>
       <Side>
-        block 0x4a72e1 · 12s ago ·{" "}
-        <span aria-hidden>🪢</span>
+        block 0x4a72e1 · 12s ago · <span aria-hidden>🪢</span>
         <VisuallyHidden>Mnemo</VisuallyHidden>
       </Side>
     </Bar>

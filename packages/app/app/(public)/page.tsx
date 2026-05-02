@@ -1,11 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import styled from "styled-components";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Logo from "@/components/Logo";
 import Starfield from "@/components/Starfield";
+import { useAgents } from "@/hooks/useAgents";
 
 const Page = styled.div`
   height: 100vh;
@@ -202,7 +204,29 @@ const FEATURES = [
   },
 ];
 
+function pad2(n: number): string {
+  return n.toString().padStart(2, "0");
+}
+
 export default function Landing() {
+  const { agents, isLoading, isError } = useAgents();
+  const stats = useMemo(() => {
+    let maxGen = 0;
+    for (const a of agents) {
+      if (a.generation > maxGen) maxGen = a.generation;
+    }
+    return {
+      minted: agents.length,
+      generations: agents.length > 0 ? maxGen + 1 : 0,
+    };
+  }, [agents]);
+
+  const showLive = !isLoading && !isError;
+  const mintedLabel = showLive ? `${pad2(stats.minted)} agents minted` : "agents minted";
+  const generationsLabel = showLive
+    ? `${pad2(stats.generations)} generations live`
+    : "generations live";
+
   return (
     <Page>
       <Header />
@@ -241,9 +265,9 @@ export default function Landing() {
           ))}
         </Features>
         <StatStrip>
-          <Stat>247 agents minted</Stat>
-          <Stat>06 generations live</Stat>
-          <Stat>2,841 ETH royalties paid</Stat>
+          <Stat>{mintedLabel}</Stat>
+          <Stat>{generationsLabel}</Stat>
+          <Stat>00G royalties paid</Stat>
         </StatStrip>
       </Main>
       <Footer />
