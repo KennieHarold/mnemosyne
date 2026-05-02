@@ -2,8 +2,43 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useConnection, usePublicClient, useWriteContract } from "wagmi";
-import { decodeEventLog, type Hex } from "viem";
+import {
+  decodeEventLog,
+  TransactionReceiptNotFoundError,
+  type Hex,
+  type PublicClient,
+  type TransactionReceipt,
+} from "viem";
 import { mnemoAgentNftAbi, mnemoAgentNftAddress } from "@/lib/contracts";
+
+const RECEIPT_POLL_INTERVAL_MS = 3_000;
+const RECEIPT_TIMEOUT_MS = 600_000;
+
+async function pollForReceipt(
+  client: PublicClient,
+  hash: Hex,
+): Promise<TransactionReceipt> {
+  const deadline = Date.now() + RECEIPT_TIMEOUT_MS;
+  let lastErr: unknown;
+  while (Date.now() < deadline) {
+    try {
+      return await client.getTransactionReceipt({ hash });
+    } catch (err) {
+      lastErr = err;
+      if (!(err instanceof TransactionReceiptNotFoundError)) {
+        const code = (err as { name?: string })?.name;
+        if (code !== "TransactionReceiptNotFoundError") {
+          throw err;
+        }
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, RECEIPT_POLL_INTERVAL_MS));
+  }
+  throw new Error(
+    `tx ${hash} not mined within ${Math.round(RECEIPT_TIMEOUT_MS / 1000)}s` +
+      (lastErr instanceof Error ? ` — last error: ${lastErr.message}` : ""),
+  );
+}
 import {
   validateMintForm,
   type MintFormState,
@@ -135,12 +170,7 @@ export function useMintAgent(): UseMintAgentReturn {
         });
         setMintTxHash(mintHash);
 
-        const mintReceipt = await publicClient.waitForTransactionReceipt({
-          hash: mintHash,
-          pollingInterval: 2_000,
-          retryCount: 30,
-          timeout: 300_000,
-        });
+        const mintReceipt = await pollForReceipt(publicClient, mintHash);
         if (mintReceipt.status !== "success") {
           throw new Error("mint reverted on chain");
         }
@@ -186,12 +216,7 @@ export function useMintAgent(): UseMintAgentReturn {
         });
         setTextsTxHash(textsHash);
 
-        const textsReceipt = await publicClient.waitForTransactionReceipt({
-          hash: textsHash,
-          pollingInterval: 2_000,
-          retryCount: 30,
-          timeout: 300_000,
-        });
+        const textsReceipt = await pollForReceipt(publicClient, textsHash);
         if (textsReceipt.status !== "success") {
           throw new Error("setTexts reverted on chain");
         }
