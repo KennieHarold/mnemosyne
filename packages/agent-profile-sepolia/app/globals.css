@@ -1,26 +1,57 @@
-@import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --mnemo-bg-base: #07080c;
+  --mnemo-bg-1: #0a0c12;
+  --mnemo-bg-2: #0e1220;
+  --mnemo-bg-3: rgba(20, 24, 34, 0.5);
+
+  --mnemo-text-primary: #e8ecf1;
+  --mnemo-text-secondary: #8fa4c2;
+  --mnemo-text-tertiary: #6b7b95;
+  --mnemo-text-quaternary: #4a5876;
+
+  --mnemo-border-faint: rgba(120, 140, 180, 0.12);
+  --mnemo-border-default: rgba(120, 140, 180, 0.18);
+  --mnemo-border-medium: rgba(120, 140, 180, 0.25);
+  --mnemo-border-strong: rgba(120, 140, 180, 0.4);
+
+  --mnemo-signal-live: #5dcaa5;
+
+  --mnemo-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--mnemo-bg-base);
+  color: var(--mnemo-text-primary);
+  font-family: var(--mnemo-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  min-height: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+input,
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: rgba(93, 202, 165, 0.25);
 }
