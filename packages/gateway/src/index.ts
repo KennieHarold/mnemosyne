@@ -113,10 +113,7 @@ function buildRouter(env: Secret) {
       if (inner.status !== 200) {
         throw new Error(`Inner dispatch failed: ${JSON.stringify(inner.body)}`);
       }
-      return encodeAbiParameters(
-        [{ type: "bytes" }],
-        [(inner.body as { data: Hex }).data],
-      );
+      return (inner.body as { data: Hex }).data;
     },
   });
 

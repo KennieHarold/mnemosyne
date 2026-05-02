@@ -11,28 +11,31 @@ export const sepoliaClient = createPublicClient({
   transport: http(sepoliaRpc),
 });
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
 export async function fetchAgentRecords(
   label: string,
 ): Promise<AgentRecords | null> {
   if (!isValidLabel(label)) return null;
   const name = normalize(ensFor(label));
 
-  const values = await Promise.all(
-    TEXT_KEYS.map((key) =>
+  const [address, ...values] = await Promise.all([
+    sepoliaClient.getEnsAddress({ name }).catch(() => null),
+    ...TEXT_KEYS.map((key) =>
       sepoliaClient.getEnsText({ name, key }).catch(() => null),
     ),
-  );
-
-  console.log(values);
+  ]);
 
   const [generation, tagline, traits, parents, children] = values;
-  const hasAny =
+  const hasAnyText =
     !!generation || !!tagline || !!traits || !!parents || !!children;
-  if (!hasAny) return null;
+  const hasAddress = !!address && address !== ZERO_ADDRESS;
+  if (!hasAddress && !hasAnyText) return null;
 
   return {
     label,
     name,
+    address: address ?? "",
     generation: generation ?? "",
     tagline: tagline ?? "",
     traits: traits ?? "",

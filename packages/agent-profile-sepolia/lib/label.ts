@@ -13,6 +13,7 @@ export type TextKey = (typeof TEXT_KEYS)[number];
 export type AgentRecords = {
   label: string;
   name: string;
+  address: string;
   generation: string;
   tagline: string;
   traits: string;

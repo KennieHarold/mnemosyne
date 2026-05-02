@@ -2,7 +2,7 @@
 
 import styled from "styled-components";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { isValidLabel, normalizeLabel } from "../lib/label";
 
 const Wrap = styled.div`
@@ -176,6 +176,7 @@ export default function Home() {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const submit = (raw: string) => {
     const label = normalizeLabel(raw);
@@ -188,7 +189,9 @@ export default function Home() {
       return;
     }
     setError(null);
-    router.push(`/agent/${label}`);
+    startTransition(() => {
+      router.push(`/agent/${label}`);
+    });
   };
 
   return (
@@ -204,8 +207,8 @@ export default function Home() {
       </Hero>
       <Subhead>
         Search for a subname under <code>mnemo.eth</code>. We pull the
-        agent&apos;s text records — generation, tagline, traits, parents,
-        children — directly from ENS.
+        agent&apos;s text records, generation, tagline, traits, parents,
+        children. Directly from ENS.
       </Subhead>
 
       <SearchForm
@@ -228,8 +231,8 @@ export default function Home() {
             autoComplete="off"
           />
           <Suffix>.mnemo.eth</Suffix>
-          <SubmitChip type="submit" disabled={!value.trim()}>
-            resolve →
+          <SubmitChip type="submit" disabled={!value.trim() || isPending}>
+            {isPending ? "resolving…" : "resolve →"}
           </SubmitChip>
         </SearchRow>
         <Hint>
@@ -246,6 +249,7 @@ export default function Home() {
           <ExamplePill
             key={ex}
             type="button"
+            disabled={isPending}
             onClick={() => {
               setValue(ex);
               submit(ex);

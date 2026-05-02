@@ -88,6 +88,21 @@ const Ens = styled.span`
   color: ${({ theme }) => theme.ink[2]};
 `;
 
+const Holder = styled.a`
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: ${({ theme }) => theme.ink[3]};
+
+  &:hover {
+    color: ${({ theme }) => theme.ink[1]};
+  }
+`;
+
+function shortAddress(addr: string): string {
+  if (!addr || addr.length < 10) return addr;
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
 const TaglineCallout = styled.blockquote`
   margin: 0;
   padding: 10px 14px;
@@ -278,6 +293,16 @@ export default function AgentProfile({
         <HeroText>
           <Name>{displayName(label)}</Name>
           <Ens>{ensFor(label)}</Ens>
+          {records.address && (
+            <Holder
+              href={`https://sepolia.etherscan.io/address/${records.address}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={records.address}
+            >
+              holder · {shortAddress(records.address)} ↗
+            </Holder>
+          )}
         </HeroText>
       </Hero>
 
@@ -343,6 +368,8 @@ export default function AgentProfile({
         <SectionLabel>{"// RAW TEXT RECORDS"}</SectionLabel>
         <Card>
           <RecordTable>
+            <RecKey>holder</RecKey>
+            <RecValue>{records.address || <Empty>not set</Empty>}</RecValue>
             <RecKey>generation</RecKey>
             <RecValue>{records.generation || <Empty>not set</Empty>}</RecValue>
             <RecKey>tagline</RecKey>
