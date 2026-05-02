@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { runInference } from "@/lib/inference";
+import { runInference } from "@/server/inference";
 
 type ChatRequestBody = {
   message?: unknown;

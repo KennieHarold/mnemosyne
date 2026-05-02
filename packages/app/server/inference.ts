@@ -8,8 +8,8 @@ import { createPublicClient, http, type Hex } from "viem";
 import {
   mnemoAgentNftAbi,
   mnemoAgentNftAddress,
-} from "./contracts";
-import { zeroGGalileoTestnet } from "./wagmi";
+} from "../lib/contracts";
+import { zeroGGalileoTestnet } from "../lib/wagmi";
 
 const RPC_URL = "https://evmrpc-testnet.0g.ai";
 const INDEXER_URL = "https://indexer-storage-testnet-turbo.0g.ai";
