@@ -192,8 +192,8 @@ export default function Header({ breadcrumb }: HeaderProps = {}) {
           <NavLink href="/mint">mint</NavLink>
           <NavSep>·</NavSep>
           <NavLink href="/breed">breed</NavLink>
-          <NavSep>·</NavSep>
-          <NavLink href="/royalties">royalties</NavLink>
+          {/* <NavSep>·</NavSep>
+          <NavLink href="/royalties">royalties</NavLink> */}
         </Nav>
       )}
       <Right>
