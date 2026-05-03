@@ -3,5 +3,6 @@
   "VerifierModule#Verifier": "0xd7Fb47bA27407bBBB616ece682f0Fc759F824cDa",
   "MnemoAgentNFTModule#UpgradeableBeacon": "0x20230f60F843c6c30cb339d6B9b5CD36bfcf3af4",
   "MnemoAgentNFTModule#BeaconProxy": "0x93224547FF5a9B24c24E92d77BEd6f2D729611C8",
-  "MnemoAgentNFTModule#MnemoAgentNFTProxied": "0x93224547FF5a9B24c24E92d77BEd6f2D729611C8"
+  "MnemoAgentNFTModule#MnemoAgentNFTProxied": "0x93224547FF5a9B24c24E92d77BEd6f2D729611C8",
+  "MnemoLineageSplitterModule#MnemoLineageSplitter": "0x1Dfc9AA5CAdC8a47D568bA5F59863674Ac0481B1"
 }
