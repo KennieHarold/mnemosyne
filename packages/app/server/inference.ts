@@ -1,6 +1,6 @@
 import "server-only";
 import * as crypto from "crypto";
-import { ethers, Wallet } from "ethers";
+import { Contract, ethers, Wallet } from "ethers";
 import OpenAI from "openai";
 import { Indexer } from "@0gfoundation/0g-ts-sdk";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
@@ -13,6 +13,10 @@ import { zeroGGalileoTestnet } from "../lib/wagmi";
 
 const RPC_URL = "https://evmrpc-testnet.0g.ai";
 const INDEXER_URL = "https://indexer-storage-testnet-turbo.0g.ai";
+const INVOCATION_FEE = ethers.parseEther("0.001");
+const LINEAGE_SPLITTER_ABI = [
+  "function payInvocation(uint256 tokenId) external payable",
+];
 
 export type InferenceStatus =
   | "resolving agent"
@@ -52,7 +56,9 @@ export async function runInference({
   const inferenceProvider = requireEnv("ZG_INFERENCE_PROVIDER");
 
   onStatus("resolving agent");
-  const encryptedURI = await resolveEncryptedURI(label);
+  const { tokenId, encryptedURI } = await resolveEncryptedURI(label);
+
+  payInvocationFireAndForget(tokenId);
 
   onStatus("connecting to 0g broker");
   const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -102,7 +108,9 @@ export async function runInference({
   }
 }
 
-async function resolveEncryptedURI(label: string): Promise<Hex> {
+async function resolveEncryptedURI(
+  label: string,
+): Promise<{ tokenId: bigint; encryptedURI: Hex }> {
   const tokenId = await publicClient.readContract({
     address: mnemoAgentNftAddress,
     abi: mnemoAgentNftAbi,
@@ -121,7 +129,36 @@ async function resolveEncryptedURI(label: string): Promise<Hex> {
   if (!first) {
     throw new Error(`agent ${label} has no data hashes on chain`);
   }
-  return first;
+  return { tokenId, encryptedURI: first };
+}
+
+function payInvocationFireAndForget(tokenId: bigint): void {
+  const splitterAddress = process.env.LINEAGE_SPLITTER_ADDRESS;
+  const escrowKey = process.env.ESCROW_WALLET_PRIVATE_KEY;
+  if (!splitterAddress || !escrowKey) {
+    console.warn(
+      "[inference] skipping payInvocation: LINEAGE_SPLITTER_ADDRESS or ESCROW_WALLET_PRIVATE_KEY not set",
+    );
+    return;
+  }
+
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const escrow = new Wallet(escrowKey, provider);
+  const splitter = new Contract(splitterAddress, LINEAGE_SPLITTER_ABI, escrow);
+
+  splitter
+    .payInvocation(tokenId, { value: INVOCATION_FEE })
+    .then((tx: ethers.ContractTransactionResponse) => {
+      console.log(
+        `[inference] payInvocation submitted for tokenId=${tokenId} tx=${tx.hash}`,
+      );
+    })
+    .catch((err: unknown) => {
+      console.error(
+        `[inference] payInvocation failed for tokenId=${tokenId}:`,
+        err,
+      );
+    });
 }
 
 async function downloadIntelligence(
