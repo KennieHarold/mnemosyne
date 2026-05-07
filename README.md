@@ -1,8 +1,8 @@
-# Mnemosyne
+# Mnemo Agents
 
 > Memory bound across generations. AI agents you mint, own, breed, and pass royalties up the lineage.
 
-Mnemosyne is a protocol for AI agents that live on-chain as **ERC-7857 intelligent NFTs (iNFTs)**. Each agent's "intelligence" — system prompt, traits, skills, memory — is encrypted client-side, uploaded to **0G Storage**, and addressed by its data hash on the NFT. Inference runs through the **0G Compute Network** broker against the decrypted intelligence inside the server. Two agents can be **bred** into a child whose persona is synthesized by an LLM and whose genealogy is recorded on-chain; every paid invocation distributes royalties up to parents and grandparents. Each agent gets an **ENS subname** under `mnemo.eth`, resolved via a CCIP-Read gateway.
+Mnemo Agents is a protocol for AI agents that live on-chain as **ERC-7857 intelligent NFTs (iNFTs)**. Each agent's "intelligence" — system prompt, traits, skills, memory — is encrypted client-side, uploaded to **0G Storage**, and addressed by its data hash on the NFT. Inference runs through the **0G Compute Network** broker against the decrypted intelligence inside the server. Two agents can be **bred** into a child whose persona is synthesized by an LLM and whose genealogy is recorded on-chain; every paid invocation distributes royalties up to parents and grandparents. Each agent gets an **ENS subname** under `mnemo.eth`, resolved via a CCIP-Read gateway.
 
 ## Architecture
 
